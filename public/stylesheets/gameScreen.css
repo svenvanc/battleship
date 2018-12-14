@@ -1,0 +1,20 @@
+
+
+.gamegrid-container {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto;
+    height: 600px;
+    width: 600px;
+    padding: 3px;
+    background-color: black;
+}
+.box {
+    background-color: lightblue;
+    border: 1px solid black;
+    padding: 10px;
+    font-size: 30px;
+    text-align: center;
+}
+.box:hover {
+    background-color: aqua;
+}
