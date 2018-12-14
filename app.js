@@ -63,33 +63,44 @@ app.use("/", indexRouter);
 app.use("/test", gameRouter);
 
 
-
-const server = http.createServer(app).listen(port);
+const server = http.createServer(app);
 
 /**
  * web socket
  */
 //import
-// const websocket = require("ws");
-// //maak de websocket aan
-// const wss = new websocket.Server({server});
-// wss.on("connection", function(ws) {
-//   ws.on("message", (message) => {
-//     console.log("message: " + message);
-//     const data = {
-//       sender: "server",
-//       message: "thank you for: " + message,
-//       error: false,
-//     };
-//     ws.send(JSON.stringify(data));
-//   });
+const websocket = require("ws");
+//maak de websocket aan
+const wss = new websocket.Server({server});
+let connectionCounter = 0;
+wss.on("connection", function(ws) {
 
-//   setInterval(() => {
-//     const data = {
-//       sender: "server",
-//       message: "Are you still there" ,
-//       error: false,
-//     };
-//     ws.send(JSON.stringify(data));
-//   }, 5000)
-// });
+  let connectionId = 'connection_' + connectionCounter++;
+  ws.on("message", (message) => {
+    console.log("message: " + message, "connection", connectionId);
+    const data = {
+      sender: "server",
+      message: "thank you for: " + message,
+      error: false,
+    };
+    ws.send(JSON.stringify(data));
+  });
+
+  const intervalId = setInterval(() => {
+    const data = {
+      sender: "server",
+      message: "Are you still there / " + connectionId,
+      error: false,
+    };
+    console.log('send ping to', connectionId);
+    ws.send(JSON.stringify(data));
+  }, 5000);
+
+  ws.on("close", () => {
+    console.log('CLOSE');
+    clearInterval(intervalId);
+  });
+});
+
+
+server.listen(port);

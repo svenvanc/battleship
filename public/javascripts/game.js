@@ -1,28 +1,30 @@
 
 
-$("#date").html(new Date());
+// $("#date").html(new Date());
 
-//haal data up
-$.get("/data", function(data, status) {
-    console.log(data);
-    //werk met de data
-    $("#date").html(data.data);
-    $("#error").html(data.error);
-})
+// //haal data up
+// $.get("/data", function(data, status) {
+//     console.log(data);
+//     //werk met de data
+//     $("#date").html(data.data);
+//     $("#error").html(data.error);
+// })
 
-$.post("/data", {question: " are you there?"}, function(data, status) {
-    console.log(data);
-});
+// $.post("/data", {question: " are you there?"}, function(data, status) {
+//     console.log(data);
+// });
 //aanmaken
 const socket = new WebSocket("ws://localhost:3000");
 socket.onmessage = function(event) {
     //als ik een message binnen krijg
-    console.log((event));
+    console.log('onmessage, event=', event);
 }
 socket.onopen = function() {
     //zodra ik open ga dan
-    socket.send(JSON.parse({data: "data"}));
+    console.log('socket onopen')
+    socket.send(JSON.stringify({data: "hallo wereld"}));
 }
+
 
 $( document ).ready(function() {
     console.log( "gameReady!" );
