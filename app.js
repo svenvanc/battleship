@@ -70,26 +70,26 @@ const server = http.createServer(app).listen(port);
  * web socket
  */
 //import
-const websocket = require("ws");
-//maak de websocket aan
-const wss = new websocket.Server({server});
-wss.on("connection", function(ws) {
-  ws.on("message", (message) => {
-    console.log("message: " + message);
-    const data = {
-      sender: "server",
-      message: "thank you for: " + message,
-      error: false,
-    };
-    ws.send(JSON.stringify(data));
-  });
+// const websocket = require("ws");
+// //maak de websocket aan
+// const wss = new websocket.Server({server});
+// wss.on("connection", function(ws) {
+//   ws.on("message", (message) => {
+//     console.log("message: " + message);
+//     const data = {
+//       sender: "server",
+//       message: "thank you for: " + message,
+//       error: false,
+//     };
+//     ws.send(JSON.stringify(data));
+//   });
 
-  setInterval(() => {
-    const data = {
-      sender: "server",
-      message: "Are you still there" ,
-      error: false,
-    };
-    ws.send(JSON.stringify(data));
-  }, 5000)
-});
+//   setInterval(() => {
+//     const data = {
+//       sender: "server",
+//       message: "Are you still there" ,
+//       error: false,
+//     };
+//     ws.send(JSON.stringify(data));
+//   }, 5000)
+// });
