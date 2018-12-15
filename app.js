@@ -48,6 +48,7 @@ module.exports = app;
 const express = require("express");
 const http = require("http");
 const bodyParser = require("body-parser");
+const battleship = require("./battleship");
 
 
 const port = 3000;
@@ -75,30 +76,41 @@ const wss = new websocket.Server({server});
 let connectionCounter = 0;
 wss.on("connection", function(ws) {
 
-  let connectionId = 'connection_' + connectionCounter++;
+ 
+
+  let playerID = 'player_' + connectionCounter++;
+
   ws.on("message", (message) => {
-    console.log("message: " + message, "connection", connectionId);
-    const data = {
-      sender: "server",
-      message: "thank you for: " + message,
-      error: false,
-    };
-    ws.send(JSON.stringify(data));
+    console.log("message: " + message, "connection", playerID);
+    const msg = JSON.parse(message);
+    if (msg.type == "newPlayer") {
+      battleship.newPlayer(playerID, ws);      
+    }
+    if (msg.type == "shot") {
+      battleship.shot(playerID, msg.x, msg.y)
+    }
+
+    // const data = {
+    //   sender: "server",
+    //   message: "thank you for: " + message,
+    //   error: false,
+    // };
+    // ws.send(JSON.stringify(data));
   });
 
-  const intervalId = setInterval(() => {
-    const data = {
-      sender: "server",
-      message: "Are you still there / " + connectionId,
-      error: false,
-    };
-    console.log('send ping to', connectionId);
-    ws.send(JSON.stringify(data));
-  }, 5000);
+  // const intervalId = setInterval(() => {
+  //   const data = {
+  //     sender: "server",
+  //     message: "Are you still there / " + playerID,
+  //     error: false,
+  //   };
+  //   console.log('send ping to', playerID);
+  //   ws.send(JSON.stringify(data));
+  // }, 5000);
 
   ws.on("close", () => {
     console.log('CLOSE');
-    clearInterval(intervalId);
+    //clearInterval(intervalId);
   });
 });
 

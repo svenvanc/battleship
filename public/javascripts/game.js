@@ -14,10 +14,20 @@
 //     console.log(data);
 // });
 //aanmaken
-const socket = new WebSocket("ws://localhost:3000");
+// const socket = new WebSocket("ws://localhost:3000");
+const socket = new WebSocket("ws://" + location.host);
+console.log(location);
 socket.onmessage = function(event) {
     //als ik een message binnen krijg
     console.log('onmessage, event=', event);
+    if (event.data == "WAIT") {
+        console.log("player is waiting");
+        showMessage("waiting for other player");
+    }
+    if (event.data == "START") {
+        console.log("game has started");
+        showMessage("started");
+    }
 }
 socket.onopen = function() {
     //zodra ik open ga dan
@@ -25,6 +35,9 @@ socket.onopen = function() {
     socket.send(JSON.stringify({data: "hallo wereld"}));
 }
 
+function showMessage(message) {
+    $("#message").text(message);
+}
 
 $( document ).ready(function() {
     console.log( "gameReady!" );
@@ -36,6 +49,7 @@ $( document ).ready(function() {
     $( "#playButton" ).click(function() {
         $( "#playButton").attr("disabled", true);
         console.log("playing")
+        socket.send(JSON.stringify({type: "newPlayer"}));
     });
 
     console.log("make grid");
@@ -44,12 +58,20 @@ $( document ).ready(function() {
    
     for (let row = 1; row < 11; row++) {
         for (column = 1; column < 11; column++) {
-            html += '<div class="box" id ="cell_' + row + '-' + column + '">a</div>'
+            html += '<div class="box" x="' + column + '" y="' + row + '" id ="cell_' + row + '-' + column + '">a</div>'
         }
     }
     html += "</div>"
     $("#gameboard1").append(html);
     $("#gameboard2").append(html);
+
+    $( "#gameboard2 .box" ).click(function(event) {
+        const x = $(this).attr('x');
+        const y = $(this).attr('y');
+        console.log(x, y);
+        socket.send(JSON.stringify({type: "shot", x: x, y: y}));
+    });
+
 
     let locations = []
     let ship = new Ship(4);
@@ -93,3 +115,5 @@ function Location(x, y) {
         this.orientation =  orientation;
     }
 }
+
+
