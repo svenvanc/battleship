@@ -8,12 +8,27 @@
     background-color: black;
 }
 
+
 .box {
     background-color: lightblue;
     border: 1px solid black;
-    padding: 5px;
+    padding: 4px;
     font-size: 15px;
     text-align: center;
+    width: 20px;
+    height: 20px;
+}
+
+.ship {
+    background-color: silver;
+}
+
+.box-hit {
+    background-color: silver;
+}
+
+.box-sunken {
+    background-color: red;
 }
 
 .box:hover {
@@ -23,10 +38,6 @@
 .gameboard {
     display: inline-block;
     padding: 10px;
-}
-
-.ship {
-    background-color: silver;
 }
 
 #playButton {

@@ -6,16 +6,16 @@ function newPlayer(playerID, ws, locations) {
     thisPlayer = new Player(playerID, ws, locations);
     if (waitingPlayer == null) {
         waitingPlayer = thisPlayer;
-        waitingPlayer.sendMessage("WAIT");
+        waitingPlayer.sendMessage({type: "WAIT"});
+        // waitingPlayer.sendMessage("WAIT");
     } else {
         let game = new Game([waitingPlayer, thisPlayer]);
         players[waitingPlayer.playerID] = game;
         players[thisPlayer.playerID] = game;
-        thisPlayer.sendMessage("START");
-        waitingPlayer.sendMessage("START");
+        thisPlayer.sendMessage({type: "START"});
+        waitingPlayer.sendMessage({type: "START"});
         waitingPlayer = null;
     }
-    console.log('current players', players)
 }
 
 function Game(players) {
@@ -24,14 +24,23 @@ function Game(players) {
 
     this.shot = function(playerID, x, y) {
         console.log(playerID, x, y);
+        let result = null;
         if (playerID == players[0].playerID) {
             console.log("shot on player 2");
+            result = board1.shot(x, y);
         }
         if (playerID == players[1].playerID) {
             console.log("shot on player 1");
+            result = board0.shot(x, y);
+        }
+
+        for (player of players) {
+            let ownBoard = (player.playerID == playerID);
+            player.sendMessage({type: 'SHOT_RESULT', ownBoard, x, y, ...result});
         }
     }
 }
+
 
 function Board(locations) {
 
@@ -44,16 +53,16 @@ function Board(locations) {
         }
     }
 
-    for (let a = 0; a < locations.length; a++) {
-        const location = locations[a];
-        const ship = new Ship();
-        this.ships.push(ship);
+    for (let i = 0; i < locations.length; i++) {
+        const location = locations[i];
         const x = location.x;
         const y = location.y;
+        const ship = new Ship(x, y, location.ship.size, location.orientation);
+        this.ships.push(ship);
 
         for (let shipCell = 0; shipCell < location.ship.size; shipCell++) {
-            let deltaX = (location.orientation == "V") ? shipCell: 0;
-            let deltaY = (location.orientation == "H") ? shipCell: 0;
+            let deltaY = (location.orientation == "V") ? shipCell: 0;
+            let deltaX = (location.orientation == "H") ? shipCell: 0;
 
             const cell = this.cells[x + deltaX][y + deltaY];
             cell.ship = ship;
@@ -61,22 +70,58 @@ function Board(locations) {
         }
     }
 
-    console.log("de cellen", this.cells);
-    console.log("de schepen", this.ships);
-    this.shot = function(playerID, x, y) {
-        console.log(playerID, x, y);
+    this.shot = function(x, y) {
+        return this.cells[x][y].hit();        
     }
 }
 
+/**
+ * a Cell of the board
+ */
 function Cell() {
     this.shot = false;
     this.ship = null;
+
+    /**
+     * returns:
+     * true/false and optianal a ship with its coordinates and orientation when this ship has been sunk by this shot
+     */
+    this.hit = function() {
+        this.shot = true;
+        let hit = false;
+        let sunkenShip = null;
+        if (this.ship != null) {
+            hit = true;
+            sunkenShip = (this.ship.isSunk()) ? this.ship.getCoordinates() : null;
+        }
+        
+        return {hit: hit, sunkenShip: sunkenShip};
+    }
 }
 
-function Ship() {
+
+function Ship(x, y, size, orientation) {
+    this.x = x;
+    this.y = y;
+    this.size = size;
+    this.orientation = orientation;
     this.shipCells = []
     this.addCell = function(cell) {
         this.shipCells.push(cell);
+    }
+
+    this.isSunk = function() {
+        let isSunk = true;
+        for (let i = 0; i < this.shipCells.length; i++) {
+            if (!this.shipCells[i].shot) {
+                isSunk = false;
+            }
+        }
+        return isSunk        
+    }
+
+    this.getCoordinates = function() {
+        return {x: this.x, y: this.y, size: this.size, orientation: this.orientation}
     }
 }
 
@@ -88,7 +133,7 @@ function Player(playerID, ws, locations) {
     this.sendMessage = function(msg) {
         console.log('SEND msg', playerID, msg)
         try {
-            this.ws.send(msg);
+            this.ws.send(JSON.stringify(msg));
         } catch(e) {
             console.log("send failed", e);
         }        
@@ -97,7 +142,6 @@ function Player(playerID, ws, locations) {
 
 
 function shot(playerID, x, y) {
-    console.log("shot.test", playerID, x, y);
     let game = players[playerID]
     
     if (game == undefined) {
@@ -106,8 +150,6 @@ function shot(playerID, x, y) {
     }
     game.shot(playerID, x, y)
 }
-
-
 
 module.exports = {
     newPlayer, shot

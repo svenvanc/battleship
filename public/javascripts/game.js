@@ -20,19 +20,48 @@ console.log(location);
 socket.onmessage = function(event) {
     //als ik een message binnen krijg
     console.log('onmessage, event=', event);
-    if (event.data == "WAIT") {
+    msg = JSON.parse(event.data);
+    if (msg.type == "WAIT") {
         console.log("player is waiting");
         showMessage("waiting for other player");
     }
-    if (event.data == "START") {
+    if (msg.type == "START") {
         console.log("game has started");
         showMessage("started");
     }
+    if (msg.type == "SHOT_RESULT") {
+        console.log("SHOT_RESULT");
+        showShotResult(msg.ownBoard, msg.x, msg.y, msg.hit);
+        if (msg.sunkenShip != null) {
+            showSunkenShip(msg.ownBoard, msg.sunkenShip);
+        }
+    }
 }
+
 socket.onopen = function() {
     //zodra ik open ga dan
     console.log('socket onopen')
     socket.send(JSON.stringify({data: "hallo wereld"}));
+}
+
+function showShotResult(ownBoard, x, y, shotResult) {
+    let boardId = (ownBoard) ? '#gameboard2' : '#gameboard1';
+    let cellId = '#cell_' + y + '-' + x;
+    let cellContent = (shotResult) ? 'X' : 'o';
+    console.log('show', cellId, cellContent);
+    let cell = boardId + ' ' + cellId;
+    $(cell).text(cellContent);
+    if (shotResult) {
+        $(cell).addClass('box-hit');
+    }
+}
+
+/**
+ * {"x":3,"y":3,"size":3,"orientation":"V"}
+ */
+function showSunkenShip(ownBoard, sunkenShip) {
+    let boardId = (ownBoard) ? '#gameboard2' : '#gameboard1';
+    addClassToShip(boardId, sunkenShip.size, sunkenShip.orientation, sunkenShip.x, sunkenShip.y, "box-sunken");
 }
 
 function showMessage(message) {
@@ -58,7 +87,7 @@ $( document ).ready(function() {
    
     for (let row = 0; row < 10; row++) {
         for (column = 0; column < 10; column++) {
-            html += '<div class="box" x="' + column + '" y="' + row + '" id ="cell_' + row + '-' + column + '">a</div>'
+            html += '<div class="box" x="' + column + '" y="' + row + '" id ="cell_' + row + '-' + column + '"></div>'
         }
     }
     html += "</div>"
@@ -90,16 +119,17 @@ $( document ).ready(function() {
 function drawShips(locations) {
     for (let count = 0; count < locations.length; count++) {
         let location = locations[count]
-        console.table(location)
-        
+        addClassToShip("#gameboard1", location.ship.size, location.orientation, location.x, location.y, "ship");
+    }
+}
 
-        for (let shipCell = 0; shipCell < location.ship.size; shipCell++) {
-            let deltaX = (location.orientation == "V") ? shipCell: 0;
-            let deltaY = (location.orientation == "H") ? shipCell: 0;
-            let cell = $("#cell_" + (location.x + deltaX) + "-" + (location.y + deltaY));
-            console.log(cell);
-            cell.addClass("ship");
-        }
+function addClassToShip(board, size, orientation, x, y, cssClass) {
+    for (let shipCell = 0; shipCell < size; shipCell++) {
+        let deltaX = (orientation == "V") ? shipCell : 0;
+        let deltaY = (orientation == "H") ? shipCell : 0;
+        let cell = $(board + " #cell_" + (x + deltaX) + "-" + (y + deltaY));
+        console.log(cell);
+        cell.addClass(cssClass);
     }
 }
 
