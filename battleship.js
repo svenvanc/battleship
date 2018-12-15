@@ -12,8 +12,13 @@ function newPlayer(playerID, ws, locations) {
         let game = new Game([waitingPlayer, thisPlayer]);
         players[waitingPlayer.playerID] = game;
         players[thisPlayer.playerID] = game;
+
+        thisPlayer.sendMessage({type: "YOUR_TURN", value: false});
+        waitingPlayer.sendMessage({type: "YOUR_TURN", value: true});
+
         thisPlayer.sendMessage({type: "START"});
         waitingPlayer.sendMessage({type: "START"});
+
         waitingPlayer = null;
     }
 }
@@ -25,18 +30,21 @@ function Game(players) {
     this.shot = function(playerID, x, y) {
         console.log(playerID, x, y);
         let result = null;
+        let nextPlayerID = null;
         if (playerID == players[0].playerID) {
-            console.log("shot on player 2");
             result = board1.shot(x, y);
+            nextPlayerID = (result.hit) ? playerID : players[1].playerID;
         }
         if (playerID == players[1].playerID) {
-            console.log("shot on player 1");
             result = board0.shot(x, y);
+            nextPlayerID = (result.hit) ? playerID : players[0].playerID;
         }
 
         for (player of players) {
             let ownBoard = (player.playerID == playerID);
+            let yourTurn = (player.playerID == nextPlayerID);
             player.sendMessage({type: 'SHOT_RESULT', ownBoard, x, y, ...result});
+            player.sendMessage({type: 'YOUR_TURN', value: yourTurn});
         }
     }
 }

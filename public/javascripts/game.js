@@ -29,6 +29,11 @@ socket.onmessage = function(event) {
         console.log("game has started");
         showMessage("started");
     }
+
+    if (msg.type == "YOUR_TURN") {
+        enableTurn(msg.value);
+    }
+
     if (msg.type == "SHOT_RESULT") {
         console.log("SHOT_RESULT");
         showShotResult(msg.ownBoard, msg.x, msg.y, msg.hit);
@@ -38,10 +43,10 @@ socket.onmessage = function(event) {
     }
 }
 
+
 socket.onopen = function() {
-    //zodra ik open ga dan
     console.log('socket onopen')
-    socket.send(JSON.stringify({data: "hallo wereld"}));
+    socket.send(JSON.stringify({data: "hi there"}));
 }
 
 function showShotResult(ownBoard, x, y, shotResult) {
@@ -68,8 +73,16 @@ function showMessage(message) {
     $("#message").text(message);
 }
 
+function enableTurn(enable) {
+    if (enable) {
+        $("#glass2").hide();
+    } else {
+        $("#glass2").show();
+    }
+}
+
+
 $( document ).ready(function() {
-    console.log( "gameReady!" );
 
     $( "#homeButton" ).click(function() {
         window.location.href = "/";
