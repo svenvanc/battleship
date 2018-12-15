@@ -84,7 +84,7 @@ wss.on("connection", function(ws) {
     console.log("message: " + message, "connection", playerID);
     const msg = JSON.parse(message);
     if (msg.type == "newPlayer") {
-      battleship.newPlayer(playerID, ws);      
+      battleship.newPlayer(playerID, ws, msg.locations);      
     }
     if (msg.type == "shot") {
       battleship.shot(playerID, msg.x, msg.y)

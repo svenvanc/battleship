@@ -1,9 +1,9 @@
 let waitingPlayer = null;
 let players = {};
 
-function newPlayer(playerID, ws) {
+function newPlayer(playerID, ws, locations) {
     console.log("newPlayer.test", playerID);
-    thisPlayer = new Player(playerID, ws);
+    thisPlayer = new Player(playerID, ws, locations);
     if (waitingPlayer == null) {
         waitingPlayer = thisPlayer;
         waitingPlayer.sendMessage("WAIT");
@@ -19,8 +19,8 @@ function newPlayer(playerID, ws) {
 }
 
 function Game(players) {
-    board0 = new Board();
-    board1 = new Board();
+    board0 = new Board(players[0].locations);
+    board1 = new Board(players[1].locations);
 
     this.shot = function(playerID, x, y) {
         console.log(playerID, x, y);
@@ -33,15 +33,57 @@ function Game(players) {
     }
 }
 
-function Board() {
+function Board(locations) {
+
+    this.cells = [];
+    this.ships = [];
+    for (let row = 0; row < 10; row++) {
+        this.cells[row] = []
+        for (column = 0; column < 10; column++) {
+            this.cells[row][column] = new Cell();
+        }
+    }
+
+    for (let a = 0; a < locations.length; a++) {
+        const location = locations[a];
+        const ship = new Ship();
+        this.ships.push(ship);
+        const x = location.x;
+        const y = location.y;
+
+        for (let shipCell = 0; shipCell < location.ship.size; shipCell++) {
+            let deltaX = (location.orientation == "V") ? shipCell: 0;
+            let deltaY = (location.orientation == "H") ? shipCell: 0;
+
+            const cell = this.cells[x + deltaX][y + deltaY];
+            cell.ship = ship;
+            ship.addCell(cell);
+        }
+    }
+
+    console.log("de cellen", this.cells);
+    console.log("de schepen", this.ships);
     this.shot = function(playerID, x, y) {
         console.log(playerID, x, y);
     }
 }
 
-function Player(playerID, ws) {
+function Cell() {
+    this.shot = false;
+    this.ship = null;
+}
+
+function Ship() {
+    this.shipCells = []
+    this.addCell = function(cell) {
+        this.shipCells.push(cell);
+    }
+}
+
+function Player(playerID, ws, locations) {
     this.playerID = playerID;
     this.ws = ws;
+    this.locations = locations;
 
     this.sendMessage = function(msg) {
         console.log('SEND msg', playerID, msg)

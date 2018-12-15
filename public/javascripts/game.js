@@ -49,15 +49,15 @@ $( document ).ready(function() {
     $( "#playButton" ).click(function() {
         $( "#playButton").attr("disabled", true);
         console.log("playing")
-        socket.send(JSON.stringify({type: "newPlayer"}));
+        socket.send(JSON.stringify({type: "newPlayer", locations: locations}));
     });
 
     console.log("make grid");
 
     let html = '<div class="gamegrid-container">'
    
-    for (let row = 1; row < 11; row++) {
-        for (column = 1; column < 11; column++) {
+    for (let row = 0; row < 10; row++) {
+        for (column = 0; column < 10; column++) {
             html += '<div class="box" x="' + column + '" y="' + row + '" id ="cell_' + row + '-' + column + '">a</div>'
         }
     }
