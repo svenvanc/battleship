@@ -78,11 +78,11 @@ function Board(locations) {
         const y = location.y;
         const ship = new Ship(x, y, location.ship.size, location.orientation);
         this.ships.push(ship);
-
+        console.log('loc', location)
         for (let shipCell = 0; shipCell < location.ship.size; shipCell++) {
             let deltaY = (location.orientation == "V") ? shipCell: 0;
             let deltaX = (location.orientation == "H") ? shipCell: 0;
-
+            console.log('cell c', x, deltaX, y, deltaY)
             const cell = this.cells[x + deltaX][y + deltaY];
             cell.ship = ship;
             ship.addCell(cell);

@@ -1,4 +1,4 @@
-
+'use strict'
 
 // $("#date").html(new Date());
 
@@ -16,11 +16,10 @@
 //aanmaken
 // const socket = new WebSocket("ws://localhost:3000");
 const socket = new WebSocket("ws://" + location.host);
-console.log(location);
 socket.onmessage = function(event) {
     //als ik een message binnen krijg
     console.log('onmessage, event=', event);
-    msg = JSON.parse(event.data);
+    let msg = JSON.parse(event.data);
     if (msg.type == "WAIT") {
         console.log("player is waiting");
         showMessage("waiting for other player");
@@ -32,6 +31,10 @@ socket.onmessage = function(event) {
 
     if (msg.type == "YOUR_TURN") {
         enableTurn(msg.value);
+    }
+
+    if (msg.type == "VICTORY") {
+        console.log(msg.type, msg.value);
     }
 
     if (msg.type == "SHOT_RESULT") {
@@ -47,7 +50,7 @@ socket.onmessage = function(event) {
 socket.onopen = function() {
     console.log('socket onopen')
     socket.send(JSON.stringify({data: "hi there"}));
-}
+};
 
 function showShotResult(ownBoard, x, y, shotResult) {
     let boardId = (ownBoard) ? '#gameboard2' : '#gameboard1';
@@ -62,7 +65,9 @@ function showShotResult(ownBoard, x, y, shotResult) {
 }
 
 /**
- * {"x":3,"y":3,"size":3,"orientation":"V"}
+ * Mark a ship that is sunken.
+ * @param {*} ownBoard has value true or false
+ * @param {*} sunkenShip object, for example {"x":3,"y":3,"size":3,"orientation":"V"}
  */
 function showSunkenShip(ownBoard, sunkenShip) {
     let boardId = (ownBoard) ? '#gameboard2' : '#gameboard1';
@@ -96,40 +101,86 @@ $( document ).ready(function() {
 
     console.log("make grid");
 
-    let html = '<div class="gamegrid-container">'
+    let html = '<div class="gamegrid-container">';
    
     for (let row = 0; row < 10; row++) {
-        for (column = 0; column < 10; column++) {
+        for (let column = 0; column < 10; column++) {
             html += '<div class="box" x="' + column + '" y="' + row + '" id ="cell_' + row + '-' + column + '">&nbsp;</div>'
         }
     }
-    html += "</div>"
+    html += "</div>";
     $("#gameboard1").append(html);
     $("#gameboard2").append(html);
 
     $( "#gameboard2 .box" ).click(function(event) {
         const x = $(this).attr('x');
         const y = $(this).attr('y');
-        console.log(x, y);
         socket.send(JSON.stringify({type: "shot", x: x, y: y}));
     });
 
-    let locations = []
-    let ship = new Ship(4);
-    let location = new Location(1, 1);
-    location.placeShip(ship, "H");
-    locations.push(location)
-
-    ship = new Ship(3);
-    location = new Location(3, 3);
-    location.placeShip(ship, "V");
-    locations.push(location)
-    
-    drawShips(locations)
-    let minDistance = calculateMinSquaredDistance(locations[0], locations[1]);
-    console.log(minDistance);
+    let locations = generateLocations();
+    drawShips(locations);
 });
 
+
+function generateLocations() {
+    let locations = [];
+    // let ship = new Ship(4);
+    // let location = new Location(6, 0, ship, "H");
+    // locations.push(location)
+    
+    let ship = new Ship(1);
+    let location = new Location(0, 0, ship, "V");
+    locations.push(location)
+
+    return locations;
+
+    const shipSizes = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+    for (let i = 0; i < shipSizes.length; i++) {
+        let location;
+        let correctLocation;
+        let ship = new Ship(shipSizes[i]);
+        do {
+            let c = generateRandomShipLocation();
+            location = new Location(c.x, c.y, ship, c.orientation);
+
+            correctLocation =
+                doesLocationFitTheBoard(location) &&
+                doesLocationKeepDistanceFromOtherLocations(location, locations);
+        }
+        while (!correctLocation);
+        locations.push(location);
+    }
+    return locations;
+}
+
+function generateRandomShipLocation() {
+    let x = Math.floor(Math.random() * 10);
+    let y = Math.floor(Math.random() * 10);
+    let orientation = (Math.random() < 0.5) ? 'H' : 'V';
+    return { x, y, orientation }
+}
+
+
+function doesLocationFitTheBoard(location) {
+    let finalPosition = getXYforNthPosition(location, location.ship.size - 1);
+    return (
+        finalPosition.x <= 9 &&
+        finalPosition.y <= 9
+    )
+}
+
+
+function doesLocationKeepDistanceFromOtherLocations(location, locations) {
+
+    for (let i = 0; i < locations.length; i++) {
+        let location2 = locations[i];
+        if (calculateMinSquaredDistance(location, location2) <= 2) {
+            return false;
+        }
+    }
+    return true;
+}
 
 /**
  * calculate the minimum squared distance between the points of a ship
@@ -137,13 +188,13 @@ $( document ).ready(function() {
  * @param {*} location2 
  */
 function calculateMinSquaredDistance(location1, location2) {
-    minSquaredDistance = 100;
+    let minSquaredDistance = 100;
     for (let i = 0; i < location1.ship.size; i++) {
-        let { x: x1, y: y1 } = getXYforNthPosition(location1, i);
+        let coordinates1 = getXYforNthPosition(location1, i);
 
         for (let j = 0; j < location2.ship.size; j++) {
-            let { x: x2, y: y2 } = getXYforNthPosition(location2, j);
-            squaredDistance = (x1 - x2)**2 + (y1 - y2)**2;
+            let coordinates2 = getXYforNthPosition(location2, j);
+            let squaredDistance = (coordinates1.x - coordinates2.x)**2 + (coordinates1.y - coordinates2.y)**2;
             if (squaredDistance < minSquaredDistance) {
                 minSquaredDistance = squaredDistance;
             }
@@ -153,12 +204,13 @@ function calculateMinSquaredDistance(location1, location2) {
 }
 
 function getXYforNthPosition(location, i) {
-    let deltaX = (location.orientation == "V") ? i : 0;
-    let deltaY = (location.orientation == "H") ? i : 0;
+    let deltaX = (location.orientation === "H") ? i : 0;
+    let deltaY = (location.orientation === "V") ? i : 0;
     let x = location.x + deltaX;
     let y = location.y + deltaY;
     return { x, y };
 }
+
 
 function drawShips(locations) {
     for (let count = 0; count < locations.length; count++) {
@@ -169,9 +221,9 @@ function drawShips(locations) {
 
 function addClassToShip(board, size, orientation, x, y, cssClass) {
     for (let shipCell = 0; shipCell < size; shipCell++) {
-        let deltaX = (orientation == "V") ? shipCell : 0;
-        let deltaY = (orientation == "H") ? shipCell : 0;
-        let cell = $(board + " #cell_" + (x + deltaX) + "-" + (y + deltaY));
+        let deltaX = (orientation == "H") ? shipCell : 0;
+        let deltaY = (orientation == "V") ? shipCell : 0;
+        let cell = $(board + " #cell_" + (y + deltaY) + "-" + (x + deltaX));
         console.log(cell);
         cell.addClass(cssClass);
     }
@@ -181,13 +233,11 @@ function Ship(size) {
     this.size = size;
 }
 
-function Location(x, y) {
+function Location(x, y, ship, orientation) {
     this.x = x;
     this.y = y;
-    this.placeShip = function(ship, orientation) {
-        this.ship = ship;
-        this.orientation =  orientation;
-    }
+    this.ship = ship;
+    this.orientation =  orientation;
 }
 
 
