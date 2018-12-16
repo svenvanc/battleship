@@ -24,6 +24,7 @@ function newPlayer(playerID, ws, locations) {
 }
 
 function Game(players) {
+    
     board0 = new Board(players[0].locations);
     board1 = new Board(players[1].locations);
 

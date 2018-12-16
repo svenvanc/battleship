@@ -100,7 +100,7 @@ $( document ).ready(function() {
    
     for (let row = 0; row < 10; row++) {
         for (column = 0; column < 10; column++) {
-            html += '<div class="box" x="' + column + '" y="' + row + '" id ="cell_' + row + '-' + column + '"></div>'
+            html += '<div class="box" x="' + column + '" y="' + row + '" id ="cell_' + row + '-' + column + '">&nbsp;</div>'
         }
     }
     html += "</div>"
@@ -114,7 +114,6 @@ $( document ).ready(function() {
         socket.send(JSON.stringify({type: "shot", x: x, y: y}));
     });
 
-
     let locations = []
     let ship = new Ship(4);
     let location = new Location(1, 1);
@@ -127,7 +126,39 @@ $( document ).ready(function() {
     locations.push(location)
     
     drawShips(locations)
+    let minDistance = calculateMinSquaredDistance(locations[0], locations[1]);
+    console.log(minDistance);
 });
+
+
+/**
+ * calculate the minimum squared distance between the points of a ship
+ * @param {*} location1 
+ * @param {*} location2 
+ */
+function calculateMinSquaredDistance(location1, location2) {
+    minSquaredDistance = 100;
+    for (let i = 0; i < location1.ship.size; i++) {
+        let { x: x1, y: y1 } = getXYforNthPosition(location1, i);
+
+        for (let j = 0; j < location2.ship.size; j++) {
+            let { x: x2, y: y2 } = getXYforNthPosition(location2, j);
+            squaredDistance = (x1 - x2)**2 + (y1 - y2)**2;
+            if (squaredDistance < minSquaredDistance) {
+                minSquaredDistance = squaredDistance;
+            }
+        }
+    }
+    return minSquaredDistance;
+}
+
+function getXYforNthPosition(location, i) {
+    let deltaX = (location.orientation == "V") ? i : 0;
+    let deltaY = (location.orientation == "H") ? i : 0;
+    let x = location.x + deltaX;
+    let y = location.y + deltaY;
+    return { x, y };
+}
 
 function drawShips(locations) {
     for (let count = 0; count < locations.length; count++) {
