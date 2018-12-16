@@ -24,29 +24,39 @@ function newPlayer(playerID, ws, locations) {
 }
 
 function Game(players) {
-    
+
     board0 = new Board(players[0].locations);
     board1 = new Board(players[1].locations);
 
     this.shot = function(playerID, x, y) {
         console.log(playerID, x, y);
+        // todo: optimize this code
         let result = null;
         let nextPlayerID = null;
+        let victory = false;
         if (playerID == players[0].playerID) {
             result = board1.shot(x, y);
             nextPlayerID = (result.hit) ? playerID : players[1].playerID;
+            victory = board1.allShipsSunken();
         }
         if (playerID == players[1].playerID) {
             result = board0.shot(x, y);
             nextPlayerID = (result.hit) ? playerID : players[0].playerID;
+            victory = board0.allShipsSunken()
         }
+
+
 
         for (player of players) {
             let ownBoard = (player.playerID == playerID);
             let yourTurn = (player.playerID == nextPlayerID);
             player.sendMessage({type: 'SHOT_RESULT', ownBoard, x, y, ...result});
             player.sendMessage({type: 'YOUR_TURN', value: yourTurn});
-        }
+            if (victory) {
+                let playervictory = (player.playerID == playerID);
+                player.sendMessage({type: 'VICTORY' , value: playervictory})
+            }
+        } 
     }
 }
 
@@ -81,6 +91,15 @@ function Board(locations) {
 
     this.shot = function(x, y) {
         return this.cells[x][y].hit();        
+    }
+
+    this.allShipsSunken = function() {
+        for (let a = 0; a < this.ships.length; a++) {
+            if (!this.ships[a].isSunk()) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 
