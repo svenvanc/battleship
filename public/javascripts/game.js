@@ -1,24 +1,8 @@
 'use strict'
 
-// $("#date").html(new Date());
-
-// //haal data up
-// $.get("/data", function(data, status) {
-//     console.log(data);
-//     //werk met de data
-//     $("#date").html(data.data);
-//     $("#error").html(data.error);
-// })
-
-// $.post("/data", {question: " are you there?"}, function(data, status) {
-//     console.log(data);
-// });
-//aanmaken
-// const socket = new WebSocket("ws://localhost:3000");
 const socket = new WebSocket("ws://" + location.host);
 socket.onmessage = function(event) {
-    //als ik een message binnen krijg
-    console.log('onmessage, event=', event);
+  
     let msg = JSON.parse(event.data);
     if (msg.type == "WAIT") {
         console.log("player is waiting");
@@ -49,7 +33,6 @@ socket.onmessage = function(event) {
 
 
 socket.onopen = function() {
-    console.log('socket onopen')
     socket.send(JSON.stringify({data: "hi there"}));
 };
 
@@ -57,9 +40,9 @@ function showShotResult(ownBoard, x, y, shotResult) {
     let boardId = (ownBoard) ? '#gameboard2' : '#gameboard1';
     let cellId = '#cell_' + y + '-' + x;
     let cellContent = (shotResult) ? 'X' : 'o';
-    console.log('show', cellId, cellContent);
     let cell = boardId + ' ' + cellId;
     $(cell).text(cellContent);
+
     if (shotResult) {
         $(cell).addClass('box-hit');
     }
@@ -102,11 +85,8 @@ $( document ).ready(function() {
 
     $( "#playButton" ).click(function() {
         $( "#playButton").attr("disabled", true);
-        console.log("playing")
         socket.send(JSON.stringify({type: "newPlayer", locations: locations}));
     });
-
-    console.log("make grid");
 
     let html = '<div class="gamegrid-container">';
    
@@ -132,15 +112,12 @@ $( document ).ready(function() {
 
 function generateLocations() {
     let locations = [];
-    // let ship = new Ship(4);
-    // let location = new Location(6, 0, ship, "H");
-    // locations.push(location)
-    
-    let ship = new Ship(1);
-    let location = new Location(0, 0, ship, "V");
-    locations.push(location)
 
-    return locations;
+    // easy for testing
+    // let ship = new Ship(1);
+    // let location = new Location(0, 0, ship, "V");
+    // locations.push(location)
+    // return locations;
 
     const shipSizes = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
     for (let i = 0; i < shipSizes.length; i++) {
@@ -231,7 +208,6 @@ function addClassToShip(board, size, orientation, x, y, cssClass) {
         let deltaX = (orientation == "H") ? shipCell : 0;
         let deltaY = (orientation == "V") ? shipCell : 0;
         let cell = $(board + " #cell_" + (y + deltaY) + "-" + (x + deltaX));
-        console.log(cell);
         cell.addClass(cssClass);
     }
 }
@@ -246,5 +222,3 @@ function Location(x, y, ship, orientation) {
     this.ship = ship;
     this.orientation =  orientation;
 }
-
-

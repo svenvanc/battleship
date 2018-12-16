@@ -2,7 +2,6 @@ let waitingPlayer = null;
 let players = {};
 
 function newPlayer(playerID, ws, locations) {
-    console.log("newPlayer.test", playerID);
     thisPlayer = new Player(playerID, ws, locations);
     if (waitingPlayer == null) {
         waitingPlayer = thisPlayer;
@@ -29,7 +28,6 @@ function Game(players) {
     board1 = new Board(players[1].locations);
 
     this.shot = function(playerID, x, y) {
-        console.log(playerID, x, y);
         // todo: optimize this code
         let result = null;
         let nextPlayerID = null;
@@ -78,11 +76,9 @@ function Board(locations) {
         const y = location.y;
         const ship = new Ship(x, y, location.ship.size, location.orientation);
         this.ships.push(ship);
-        console.log('loc', location)
         for (let shipCell = 0; shipCell < location.ship.size; shipCell++) {
             let deltaY = (location.orientation == "V") ? shipCell: 0;
             let deltaX = (location.orientation == "H") ? shipCell: 0;
-            console.log('cell c', x, deltaX, y, deltaY)
             const cell = this.cells[x + deltaX][y + deltaY];
             cell.ship = ship;
             ship.addCell(cell);
@@ -159,11 +155,11 @@ function Player(playerID, ws, locations) {
     this.locations = locations;
 
     this.sendMessage = function(msg) {
-        console.log('SEND msg', playerID, msg)
         try {
             this.ws.send(JSON.stringify(msg));
         } catch(e) {
             console.log("send failed", e);
+            // todo: implement error handling
         }        
     }
 }
@@ -174,7 +170,8 @@ function shot(playerID, x, y) {
     
     if (game == undefined) {
         console.log("unknown player"); 
-        return
+        return;
+        // todo: implement error handling
     }
     game.shot(playerID, x, y)
 }
