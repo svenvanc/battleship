@@ -53,4 +53,13 @@
     background: grey;
     opacity: 0.65;
     z-index: 900;
+    text-align: center;
+
+}
+
+#glass2 .msg {
+    line-height: 300px;
+    font-size: 50px;
+    color: red;
+    font-weight: bold;
 }

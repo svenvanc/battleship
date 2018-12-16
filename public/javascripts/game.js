@@ -34,6 +34,7 @@ socket.onmessage = function(event) {
     }
 
     if (msg.type == "VICTORY") {
+        showVictory(msg.value);
         console.log(msg.type, msg.value);
     }
 
@@ -84,6 +85,12 @@ function enableTurn(enable) {
     } else {
         $("#glass2").show();
     }
+}
+
+function showVictory(victory) {
+    $("#glass2").show();
+    let msg = (victory) ? "VICTORY" : "DEFEAT"
+    $("#glass2 .msg").text(msg);
 }
 
 
